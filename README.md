@@ -1,5 +1,4 @@
 # Portfolio
-My coding portfolio
 
 Hi, welcome to my portfolio!
 
