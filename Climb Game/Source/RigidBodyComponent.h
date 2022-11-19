@@ -13,6 +13,7 @@ public:
 	sf::Vector2f GetAcceleration() { return acceleration; }
 	void SetAcceleration(sf::Vector2f acceleration) { this->acceleration = acceleration; }
 	sf::Vector2f GetPosition() { return position; }
+	void SetPosition(sf::Vector2f pos) { position = pos; }
 
 	float GetMass() { return mass; }
 	void SetMass(float mass) { this->mass = mass; }

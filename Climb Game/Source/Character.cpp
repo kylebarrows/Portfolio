@@ -245,16 +245,38 @@ void Character::CheckCollisions()
 			bFacingRight = true;
 			if (!bAttachedToWall)
 			{
-				OnWallAttach();
+ 				if(hitResult.normal.y < 0.1)
+				{
+					OnWallAttach();
+				}
 			}
 
 			if (!CMath::NearlyZero(hitResult.normal.y))
 			{
-				// Ehhhh kinda a hack for the moment
 				if (hitResult.normal.y > 0)
 				{
-					transform.location.y -= 1.0;
-					OnWallRelease();
+					// Let the player grab on if they hit the bottom
+					transform.location.y += 0.4;
+					float xOffset = b.minimum.x - a.minimum.x;
+					float aXLength = a.maximum.x - a.minimum.x;
+					float bXLength = b.maximum.x - b.minimum.x;
+
+					// When character is to the left of the object
+					if (xOffset >= 0)
+					{
+						transform.location.x -= (a.maximum.x - b.minimum.x) - 0.5;
+					}
+					else
+					{
+						transform.location.x += b.maximum.x - a.minimum.x + 0.5;
+					}
+
+					// Set positions and velocity, let the collision check handle the rest
+					rb->SetPosition(transform.location);
+					sf::Vector2f vel = rb->GetVelocity();
+					vel.x = -vel.x;
+					rb->SetVelocity(vel);
+					hitResult.normal.y = 0;
 				}
 			}
 

@@ -19,7 +19,7 @@ private:
 	const float WALL_WIDTH = 1.0f;
 	const float MIN_WALL_HEIGHT = 4.0f;
 	const float MAX_WALL_HEIGHT = 20.0f;
-	const float WALL_HORIZONTAL_SEPARATION = 14.0f;
+	const float WALL_HORIZONTAL_SEPARATION = 12.0f;
 	const float WALL_H_S_SAME = 7.0f;
 	const float MIN_WALL_SEPARATION_HEIGHT = 2.0f;
 	const float MAX_WALL_SEPARATION_HEIGHT = 8.0f;

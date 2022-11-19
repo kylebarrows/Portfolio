@@ -122,6 +122,21 @@ void WallPlacer::GenerateWall(Game* game)
 
 	lastHeight = highestWallSoFar;
 	highestWallSoFar = wallPos.y + wallDimensions.y;
+
+	float wallXDist = lastWallX - wallPos.x;
+	if (std::abs(wallXDist) > MAX_WALL_SEPARATION_HEIGHT)
+	{
+		// Wall needs to move to left
+		if (lastWallX < wallPos.x)
+		{
+			wallPos.x -= std::abs(wallXDist) - MAX_WALL_SEPARATION_HEIGHT;
+		}
+		else
+		{
+			wallPos.x += std::abs(wallXDist) - MAX_WALL_SEPARATION_HEIGHT;
+		}
+	}
+
 	lastWallX = wallPos.x;
 	if (highestWallSoFar < lastHeight)
 	{
