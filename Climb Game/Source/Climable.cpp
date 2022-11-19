@@ -2,6 +2,7 @@
 #include "Actor.h"
 #include "CollisionComponent.h"
 #include "RectangleComponent.h"
+#include "Game.h"
 
 Climbable::Climbable(Game* game)
 	: Actor(game)
@@ -14,13 +15,16 @@ Climbable::Climbable(Game* game, sf::Vector2f pos, sf::Vector2f dimensions)
 	:Actor(game)
 {
 	SetLocation(pos);
-	sf::Vector2f min = sf::Vector2f(pos.x - dimensions.x, pos.y - dimensions.y);
-	sf::Vector2f max = sf::Vector2f(pos.x + dimensions.x, pos.y + dimensions.y);
-	collider = new CollisionComponent(this, -dimensions, dimensions);
+	collider = new CollisionComponent(this, pos, dimensions);
 	rectangle = new RectangleComponent(this);
 
-	rectangle->setPosition(pos);
+	rectangle->setPosition(collider->getAABB().minimum);
 	rectangle->setDimensions(dimensions);
-	rectangle->setColor(sf::Color::Green);
+	rectangle->setColor(sf::Color(99, 70, 35));
 
+	highestPoint = pos.y + dimensions.y;
+}
+
+Climbable::~Climbable()
+{
 }

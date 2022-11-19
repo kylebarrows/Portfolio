@@ -29,6 +29,11 @@ void RigidBodyComponent::ClearAccelerationAndVelocity()
 	acceleration = sf::Vector2f(0, 0);
 }
 
+void RigidBodyComponent::ClearYVelocity()
+{
+	velocity.y = 0.0;
+}
+
 // Add force to the rigid body to be handled next frame
 void RigidBodyComponent::AddForce(sf::Vector2f force)
 {

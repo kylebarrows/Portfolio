@@ -11,9 +11,14 @@ class Climbable : public Actor {
 public:
 	Climbable(Game* game);
 	Climbable(Game* game, sf::Vector2f min, sf::Vector2f max);
+	~Climbable();
+
+	float getHighestPoint() { return highestPoint; };
 
 private:
 	RectangleComponent* rectangle;
 	CollisionComponent* collider;
+
+	float highestPoint;
 
 };

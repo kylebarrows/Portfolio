@@ -14,6 +14,8 @@ Actor::Actor(Game* game)
 
 Actor::~Actor()
 {
+	game->RemoveActor(this);
+
 	while (!components.empty())
 	{
 		delete components.back();

@@ -1,10 +1,12 @@
 #pragma once
 #include "RenderComponent.h"
 
+// Bottom left corner is pivot
 class RectangleComponent : public RenderComponent
 {
 public:
 	RectangleComponent(Actor* owner, int order = 100);
+	RectangleComponent(Actor* owner, sf::Vector2f min, sf::Vector2f max);
 
 	void Update(float deltaTime) override;
 

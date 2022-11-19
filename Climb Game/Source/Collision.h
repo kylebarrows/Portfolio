@@ -11,9 +11,10 @@ struct HitResult
 
 struct AABB
 {
-	// minimum and maximum points of the box
-	sf::Vector2f maximum;
+	// Minimum should be at the bottom left corner of the AABB
+	// maximum defined by extents + minimum
 	sf::Vector2f minimum;
+	sf::Vector2f maximum;
 
 	AABB();
 	AABB(sf::Vector2f min, sf::Vector2f max);

@@ -6,7 +6,7 @@ class CollisionComponent : public Component
 {
 public:
 	CollisionComponent(class Actor* owner, int order = 100);
-	CollisionComponent(class Actor* owner, sf::Vector2f minimum, sf::Vector2f maximum);
+	CollisionComponent(class Actor* owner, sf::Vector2f minimum, sf::Vector2f extents);
 	~CollisionComponent();
 
 	AABB getAABB();

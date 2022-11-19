@@ -31,17 +31,17 @@ void ActorManager::Update(float deltaTime)
 		Actors.push_back(actor);
 	}
 	PendingActors.clear();
-
-	// Finally remove all old actors
-	for (auto actor : Actors)
-	{
-		//std::remove_if(Actors.begin(), Actors.end(), !actor->GetActive());
-	}
 }
 
 void ActorManager::AddActor(Actor* actor)
 {
 	PendingActors.push_back(actor);
+}
+
+void ActorManager::RemoveActor(Actor* actor)
+{
+	auto iter = std::find(Actors.begin(), Actors.end(), actor);
+	Actors.erase(iter);
 }
 
 std::vector<Actor*>& ActorManager::GetActors()

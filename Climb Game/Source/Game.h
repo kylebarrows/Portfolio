@@ -8,6 +8,7 @@ class Character;
 class RenderComponent;
 class CollisionComponent;
 class Climbable;
+class WallPlacer;
 
 class Game
 {
@@ -22,6 +23,7 @@ public:
 	const bool IsRunning() const;
 
 	void AddActor(Actor* actor);
+	void RemoveActor(Actor* actor);
 	void AddRenderable(RenderComponent* renderable);
 	void AddCollider(CollisionComponent* collider);
 	void RemoveRenderable(RenderComponent* renderable);
@@ -45,13 +47,19 @@ private:
 	std::vector<RenderComponent*> renderables;
 	std::vector<CollisionComponent*> colliders;
 
+	std::vector<RenderComponent*> pendingRenderable;
+	std::vector<CollisionComponent*> pendingColliders;
+
+
 	void GetInputs();
+	void Update(float deltaTime);
 	void Render();
+	void CheckForGameOver();
 
-	Climbable* ground;
-	Climbable* wall;
-	Climbable* wall2;
-
+	// Some game Specific stuff
 	Character* character;
-	RigidBodyComponent* rb;
+	WallPlacer* wallPlacer;
+	int maxPlayerHeight;
+	int currentPlayerHeight;
+	int wallHeightToPurge;
 };

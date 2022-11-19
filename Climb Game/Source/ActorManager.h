@@ -14,6 +14,7 @@ public:
 
 	void Update(float deltaTime);
 	void AddActor(Actor* actor);
+	void RemoveActor(Actor* actor);
 	std::vector<Actor*>& GetActors();
 
 private:

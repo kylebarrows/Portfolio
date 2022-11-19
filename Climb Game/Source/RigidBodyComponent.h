@@ -20,6 +20,7 @@ public:
 	void Update(float deltaTime);
 
 	void ClearAccelerationAndVelocity();
+	void ClearYVelocity();
 	void AddForce(sf::Vector2f force);
 
 	void ApplyImpulse(float normalVel, sf::Vector2f normal);

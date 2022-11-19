@@ -21,16 +21,12 @@ Character::Character(Game* game)
 	if (rect)
 	{
 		rect->setDimensions(sf::Vector2f(2, 2));
-		rect->setPosition(sf::Vector2f(0, 4));
+		rect->setPosition(sf::Vector2f(0, 1));
 		rect->setColor(sf::Color::Red);
 	}
 
-	sf::Vector2f colliderBound = sf::Vector2f(0.1f, 0.1f);
-	sf::Vector2f min = transform.location - colliderBound;
-	sf::Vector2f max = transform.location + colliderBound;
-	collider = new CollisionComponent(this, min, max);
-
-	this->SetLocation(sf::Vector2f(0, 4));
+	sf::Vector2f colliderBound = sf::Vector2f(2.2f, 2.2f);
+	collider = new CollisionComponent(this, transform.location, colliderBound);
 }
 
 void Character::UpdateActor(float deltaTime)
@@ -40,6 +36,8 @@ void Character::UpdateActor(float deltaTime)
 	// Attached to wall behavior
 	if (bAttachedToWall)
 	{
+		fallTimer = MAX_FALL_TIME;
+
 		if (wallHangTimer < 0)
 		{
 			rb->AddForce(hangGravityForce);
@@ -48,24 +46,61 @@ void Character::UpdateActor(float deltaTime)
 	else
 	{
 		rb->AddForce(regularGravityForce);
+
+		// Player is falling
+		if (!bJumping && !bDoubleJumping)
+		{
+			fallTimer -= deltaTime;
+		}
 	}
+
 
 	if (wallHangTimer > 0)
 	{
 		wallHangTimer -= deltaTime;
 	}
+
+	if (jumpHoldTimer > 0)
+	{
+		jumpHoldTimer -= deltaTime;
+	}
+	else
+	{
+		bJumping = false;
+		bDoubleJumping = false;
+	}
+
+	if (fallTimer <= 0)
+	{
+		isAlive = false;
+	}
+}
+
+// Reset some player data;
+void Character::Reset()
+{
+	fallTimer = MAX_FALL_TIME * 5;
+
+	isAlive = true;
+	bAttachedToWall = false;
+	bCanJump = false;
+	bCanDoubleJump = false;
+	bFacingRight = true;
+	bJumping = false;
+	bDoubleJumping = false;
+
+	rb->ClearAccelerationAndVelocity();
 }
 
 void Character::ProcessInput(sf::Event& event)
 {
 	sf::Vector2f vel = rb->GetVelocity();
-	vertical = 0.0;
-	horizontal = 0.0;
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 	{
 		if (bAttachedToWall && bCanJump)
 		{
+			jumpHoldTimer = MAX_JUMP_HOLD_TIME;
 			Jump(sf::Vector2f(1, 1));
 			bAttachedToWall = false;
 			bCanJump = false;
@@ -73,9 +108,23 @@ void Character::ProcessInput(sf::Event& event)
 		}
 		else if (bCanJump && bCanDoubleJump)
 		{
-			DoubleJump(sf::Vector2f(2, 1));
+			jumpHoldTimer = MAX_JUMP_HOLD_TIME;
+			DoubleJump(sf::Vector2f(1, 1));
 			bCanJump = false;
 			bCanDoubleJump = false;
+		}
+
+		// Check for hold jumping
+		if (jumpHoldTimer > 0.0)
+		{
+			if (bJumping)
+			{
+				Jump(sf::Vector2f(1, 1));
+			}
+			else
+			{
+				DoubleJump(sf::Vector2f(1, 1));
+			}
 		}
 	}
 
@@ -88,6 +137,46 @@ void Character::ProcessInput(sf::Event& event)
 	}
 }
 
+// Handles moving the camera along the x axis unless moving passed the extents of the box.
+void Character::MoveCamera(sf::View& view)
+{
+	sf::Vector2f cameraPos = view.getCenter();
+	cameraPos.x /= 50;
+	cameraPos.y /= 50;
+	sf::Vector2f newCameraPos = cameraPos;
+	
+	// Only move the camera along if traveling upward
+	if (rb->GetVelocity().y >= 0)
+	{
+		newCameraPos.y = -transform.location.y;
+	}
+
+
+	if (transform.location.x > cameraPos.x + MAX_X_OFFSET)
+	{
+		int i = 0;
+	}
+
+	float xDistanceFromCenter = transform.location.x - (cameraPos.x);
+	if (std::abs(xDistanceFromCenter) > MAX_X_OFFSET)
+	{
+		float xAmountToMove = std::abs(xDistanceFromCenter) - MAX_X_OFFSET;
+		if (transform.location.x < cameraPos.x)
+		{
+			xAmountToMove *= -1;
+		}
+		else if (transform.location.x > cameraPos.x)
+		{
+			xAmountToMove;
+		}
+		
+		xAmountToMove = CMath::Clamp(-0.05, 0.05, xAmountToMove);
+		newCameraPos.x = cameraPos.x + xAmountToMove;
+	}
+
+	view.setCenter(newCameraPos.x * 50, newCameraPos.y * 50);
+}
+
 void Character::Move(sf::Vector2f offset)
 {
 
@@ -95,14 +184,14 @@ void Character::Move(sf::Vector2f offset)
 
 void Character::Jump(sf::Vector2f jumpDir)
 {
+	bJumping = true;
 	if (bFacingRight)
 	{
-		rb->ApplyImpulse(JUMP_HEIGHT, jumpDir);
+		rb->SetVelocity({ jumpDir.x * JUMP_HEIGHT, jumpDir.y * JUMP_HEIGHT });
 	}
 	else
 	{
-		sf::Vector2f newDir = sf::Vector2f(-jumpDir.x, jumpDir.y);
-		rb->ApplyImpulse(JUMP_HEIGHT, newDir);
+		rb->SetVelocity({ -jumpDir.x * JUMP_HEIGHT, jumpDir.y * JUMP_HEIGHT });
 	}
 
 	OnWallRelease();
@@ -110,14 +199,16 @@ void Character::Jump(sf::Vector2f jumpDir)
 
 void Character::DoubleJump(sf::Vector2f jumpDir)
 {
+	bDoubleJumping = true;
+	bJumping = false;
+	rb->ClearAccelerationAndVelocity();
 	if (bFacingRight)
 	{
-		sf::Vector2f newDir = sf::Vector2f(-jumpDir.x, jumpDir.y);
-		rb->ApplyImpulse(JUMP_HEIGHT, newDir);
+		rb->SetVelocity({ -jumpDir.x * JUMP_HEIGHT, jumpDir.y * JUMP_HEIGHT });
 	}
 	else
 	{
-		rb->ApplyImpulse(JUMP_HEIGHT, jumpDir);
+		rb->SetVelocity({ jumpDir.x * JUMP_HEIGHT, jumpDir.y * JUMP_HEIGHT });
 	}
 
 	OnWallRelease();
@@ -142,12 +233,29 @@ void Character::CheckCollisions()
 		AABB a = collider->getAABB();
 		AABB b = rect->getAABB();
 		HitResult hitResult;
+
+		// Small optimization, not even worth checking objects above the player
+		if (a.maximum.y < b.minimum.y)
+		{
+			break;
+		}
+
 		if(TestAABB(a, b, hitResult))
 		{
 			bFacingRight = true;
 			if (!bAttachedToWall)
 			{
 				OnWallAttach();
+			}
+
+			if (!CMath::NearlyZero(hitResult.normal.y))
+			{
+				// Ehhhh kinda a hack for the moment
+				if (hitResult.normal.y > 0)
+				{
+					transform.location.y -= 1.0;
+					OnWallRelease();
+				}
 			}
 
 			// Check if character hit a wall
@@ -182,7 +290,8 @@ void Character::CheckCollisions()
 void Character::OnWallAttach()
 {
 	bAttachedToWall = true;
-	bCanJump = true;
+	bJumping = false;
+	bDoubleJumping = false;
 	rb->ClearAccelerationAndVelocity();
 	wallHangTimer = MAX_WALL_HANG_TIME;
 }
@@ -190,7 +299,6 @@ void Character::OnWallAttach()
 void Character::OnWallRelease()
 {
 	bAttachedToWall = false;
-	bCanDoubleJump = true;
 	wallHangTimer = 0;
 }
 

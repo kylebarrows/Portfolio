@@ -8,11 +8,11 @@ CollisionComponent::CollisionComponent(class Actor* owner, int order /*= 100*/)
 	owner->GetGame()->AddCollider(this);
 }
 
-CollisionComponent::CollisionComponent(class Actor* owner, sf::Vector2f minimum, sf::Vector2f maximum)
+CollisionComponent::CollisionComponent(class Actor* owner, sf::Vector2f minimum, sf::Vector2f extents)
 	:Component(owner)
-{
+{ 
 	setMin(minimum);
-	setMax(maximum);
+	setMax(minimum + extents);
 
 	owner->GetGame()->AddCollider(this);
 }
@@ -24,7 +24,8 @@ CollisionComponent::~CollisionComponent()
 
 AABB CollisionComponent::getAABB()
 {
-	sf::Vector2f min = owner->GetLocation() + m_AABB.minimum;
-	sf::Vector2f max = owner->GetLocation() + m_AABB.maximum;
+	sf::Vector2f extents = m_AABB.maximum - m_AABB.minimum;
+	sf::Vector2f min = owner->GetLocation();
+	sf::Vector2f max = min + extents;
 	return AABB(min, max);
 }

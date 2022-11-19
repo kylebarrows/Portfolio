@@ -6,13 +6,13 @@
 #include "RenderComponent.h"
 #include "CollisionComponent.h"
 #include "Climbable.h"
+#include "WallPlacer.h"
 
 Game::Game()
 {
 	window = nullptr;
 	test = nullptr;
 	actorManager = nullptr;
-	ground = nullptr;
 }
 
 Game::~Game()
@@ -34,6 +34,7 @@ bool Game::Initialize()
 	window->setVerticalSyncEnabled(true);
 
 	actorManager = new ActorManager();
+	wallPlacer = new WallPlacer();
 
 	view.reset(sf::FloatRect(0, 0, 800, 600));
 	view.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
@@ -55,14 +56,21 @@ void Game::Run()
 	{
 		deltaTime = clock.restart().asSeconds();
 		GetInputs();
-		actorManager->Update(deltaTime);
+		Update(deltaTime);
 		Render();
+		CheckForGameOver();
 	}
 }
 
 void Game::EndGame()
 {
+	std::cout << "Game over!" << std::endl;
 
+	// Delete all generated walls
+	wallPlacer->RemoveWallsBelowHeight(this, INT_MAX);
+	delete character;
+
+	LoadGame();
 }
 
 const bool Game::IsRunning() const
@@ -73,6 +81,11 @@ const bool Game::IsRunning() const
 void Game::AddActor(Actor* actor)
 {
 	actorManager->AddActor(actor);
+}
+
+void Game::RemoveActor(Actor* actor)
+{
+	actorManager->RemoveActor(actor);
 }
 
 // Adds a renderable to the list of renderables
@@ -103,21 +116,18 @@ void Game::RemoveCollider(CollisionComponent* collider)
 
 void Game::LoadGame()
 {
-	// Currently testing mechanics of the game, base stuff
 	character = new Character(this);
+	character->Reset();
+	character->SetLocation(sf::Vector2f(0.0, 3.0));
+	
+	wallPlacer->GenerateStart(this);
+  	wallPlacer->GenerateWalls(this, 100);
 
-	sf::Vector2f groundPos = sf::Vector2f(-25.0, -12.0);
-	sf::Vector2f groundDimensions = sf::Vector2f(50.0f, 5.0f);
-	ground = new Climbable(this, groundPos, groundDimensions);
+	currentPlayerHeight = 0.0;
+	wallHeightToPurge = 50.0;
 
-	sf::Vector2f wallPos = sf::Vector2f(7.0, -10.0);
-	sf::Vector2f wallDimensions = sf::Vector2f(2.0, 20.0f);
-	wall = new Climbable(this, wallPos, wallDimensions);
-
-	wallPos = sf::Vector2f(-7.0, 5.0);
-	wallDimensions = sf::Vector2f(2.0, 20.0f);
-	wall2 = new Climbable(this, wallPos, wallDimensions);
-
+	sf::Vector2f characterLocation = character->GetLocation();
+	view.setCenter(characterLocation.x * 50, characterLocation.y * -50);
 }
 
 // Handles receiving inputs from the player
@@ -137,6 +147,40 @@ void Game::GetInputs()
 		
 		character->ProcessInput(event);
 	}
+
+}
+
+void Game::Update(float deltaTime)
+{
+	actorManager->Update(deltaTime);
+
+	 // Remove walls that are way below the player and prompt generation of new ones
+	currentPlayerHeight = character->GetPlayerHeight();
+	if (character->GetPlayerHeight() > wallHeightToPurge)
+	{
+		wallPlacer->RemoveWallsBelowHeight(this, wallHeightToPurge - 10);
+		wallHeightToPurge += 50;
+
+		wallPlacer->GenerateWalls(this, wallHeightToPurge + 50);
+	}
+
+	// Update players max height
+	if (currentPlayerHeight > maxPlayerHeight)
+	{
+		maxPlayerHeight = currentPlayerHeight;
+	}
+
+	for (auto collider : pendingColliders)
+	{
+		colliders.push_back(collider);
+	}
+	pendingColliders.clear();
+
+	for (auto renderable : pendingRenderable)
+	{
+		renderables.push_back(renderable);
+	}
+	pendingRenderable.clear();
 
 }
 
@@ -161,8 +205,15 @@ void Game::Render()
 		renderable->Render(window, transform);
 	}
 
-	sf::Vector2f characterLocation = character->GetLocation();
-	view.setCenter(characterLocation.x * 50, characterLocation.y * -50);
+	character->MoveCamera(view);
 	window->display();
+}
+
+void Game::CheckForGameOver()
+{
+	if (!character->IsAlive())
+	{
+		EndGame();
+	}
 }
 

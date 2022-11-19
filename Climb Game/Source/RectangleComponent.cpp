@@ -7,6 +7,17 @@ RectangleComponent::RectangleComponent(Actor* owner, int order /*= 100*/)
 	m_Shape = sf::RectangleShape();
 }
 
+RectangleComponent::RectangleComponent(Actor* owner, sf::Vector2f min, sf::Vector2f max)
+	:RenderComponent(owner)
+{
+	m_Shape = sf::RectangleShape();
+
+	float xLen = max.x - min.x;
+	float yLen = max.y - min.y;
+	sf::Vector2f dimensions = sf::Vector2f(xLen / 2, yLen / 2);
+	setDimensions(dimensions);
+}
+
 void RectangleComponent::Update(float deltaTime)
 {
 	setPosition(owner->GetLocation());
